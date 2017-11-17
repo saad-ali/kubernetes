@@ -20,11 +20,11 @@ import (
 	"errors"
 	"testing"
 
+	csipb "github.com/container-storage-interface/spec/lib/go/csi"
 	grpctx "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	api "k8s.io/api/core/v1"
 	"k8s.io/kubernetes/pkg/volume/csi/fake"
-	csipb "k8s.io/kubernetes/pkg/volume/csi/proto/csi"
 )
 
 func setupClient(t *testing.T) *csiDriverClient {

@@ -23,11 +23,11 @@ import (
 	"net"
 	"time"
 
+	csipb "github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	grpctx "golang.org/x/net/context"
 	"google.golang.org/grpc"
 	api "k8s.io/api/core/v1"
-	csipb "k8s.io/kubernetes/pkg/volume/csi/proto/csi"
 )
 
 type csiClient interface {

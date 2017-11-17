@@ -23,8 +23,8 @@ import (
 
 	"google.golang.org/grpc"
 
+	csipb "github.com/container-storage-interface/spec/lib/go/csi"
 	grpctx "golang.org/x/net/context"
-	csipb "k8s.io/kubernetes/pkg/volume/csi/proto/csi"
 )
 
 type FakeIdentityClient struct {
