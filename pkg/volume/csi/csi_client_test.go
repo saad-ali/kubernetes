@@ -34,6 +34,7 @@ func setupClient(t *testing.T) *csiDriverClient {
 	// setup mock grpc clients
 	client.idClient = fake.NewIdentityClient()
 	client.nodeClient = fake.NewNodeClient()
+	client.ctrlClient = fake.NewControllerClient()
 
 	return client
 }
@@ -49,12 +50,57 @@ func TestClientAssertSupportedVersion(t *testing.T) {
 		{testName: "unsupported version", ver: &csipb.Version{Major: 0, Minor: 0, Patch: 0}, mustFail: true},
 		{testName: "grpc error", ver: &csipb.Version{Major: 0, Minor: 1, Patch: 0}, mustFail: true, err: errors.New("grpc error")},
 	}
-	client := setupClient(t)
 
 	for _, tc := range testCases {
 		t.Log("case: ", tc.testName)
+		client := setupClient(t)
 		client.idClient.(*fake.FakeIdentityClient).SetNextError(tc.err)
 		err := client.AssertSupportedVersion(grpctx.Background(), tc.ver)
+		if tc.mustFail && err == nil {
+			t.Error("must fail, but err = nil")
+		}
+	}
+}
+
+func TestClientAssertVolPublishCapability(t *testing.T) {
+	testCases := []struct {
+		name     string
+		caps     []*csipb.ControllerServiceCapability
+		mustFail bool
+		err      error
+	}{
+		{
+			name: "publish supported",
+			caps: []*csipb.ControllerServiceCapability{
+				{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_UNKNOWN}}},
+				{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME}}},
+			},
+		},
+		{
+			name: "publish not supported",
+			caps: []*csipb.ControllerServiceCapability{
+				{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_UNKNOWN}}},
+				{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_LIST_VOLUMES}}},
+			},
+			mustFail: true,
+		},
+		{
+			name: "grpc error",
+			caps: []*csipb.ControllerServiceCapability{
+				{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_UNKNOWN}}},
+				{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME}}},
+			},
+			mustFail: true,
+			err:      errors.New("grpc error"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Log("case: ", tc.name)
+		client := setupClient(t)
+		client.ctrlClient.(*fake.FakeControllerClient).SetNextError(tc.err)
+		client.ctrlClient.(*fake.FakeControllerClient).SetNextCapabilities(tc.caps)
+		err := client.AssertVolumePublishCapability(grpctx.Background())
 		if tc.mustFail && err == nil {
 			t.Error("must fail, but err = nil")
 		}

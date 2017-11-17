@@ -123,3 +123,64 @@ func (f *FakeNodeClient) NodeProbe(ctx context.Context, in *csipb.NodeProbeReque
 func (f *FakeNodeClient) NodeGetCapabilities(ctx context.Context, in *csipb.NodeGetCapabilitiesRequest, opts ...grpc.CallOption) (*csipb.NodeGetCapabilitiesResponse, error) {
 	return nil, nil
 }
+
+type FakeControllerClient struct {
+	nextCapabilities []*csipb.ControllerServiceCapability
+	nextErr          error
+}
+
+func NewControllerClient() *FakeControllerClient {
+	return &FakeControllerClient{}
+}
+
+func (f *FakeControllerClient) SetNextError(err error) {
+	f.nextErr = err
+}
+
+func (f *FakeControllerClient) SetNextCapabilities(caps []*csipb.ControllerServiceCapability) {
+	f.nextCapabilities = caps
+}
+
+func (f *FakeControllerClient) ControllerGetCapabilities(ctx context.Context, in *csipb.ControllerGetCapabilitiesRequest, opts ...grpc.CallOption) (*csipb.ControllerGetCapabilitiesResponse, error) {
+	if f.nextErr != nil {
+		return nil, f.nextErr
+	}
+
+	if f.nextCapabilities == nil {
+		f.nextCapabilities = []*csipb.ControllerServiceCapability{
+			{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_UNKNOWN}}},
+		}
+	}
+	return &csipb.ControllerGetCapabilitiesResponse{
+		Capabilities: f.nextCapabilities,
+	}, nil
+}
+
+func (f *FakeControllerClient) CreateVolume(ctx context.Context, in *csipb.CreateVolumeRequest, opts ...grpc.CallOption) (*csipb.CreateVolumeResponse, error) {
+	return nil, nil
+}
+
+func (f *FakeControllerClient) DeleteVolume(ctx context.Context, in *csipb.DeleteVolumeRequest, opts ...grpc.CallOption) (*csipb.DeleteVolumeResponse, error) {
+	return nil, nil
+}
+
+func (f *FakeControllerClient) ControllerPublishVolume(ctx context.Context, in *csipb.ControllerPublishVolumeRequest, opts ...grpc.CallOption) (*csipb.ControllerPublishVolumeResponse, error) {
+	return nil, nil
+}
+func (f *FakeControllerClient) ControllerUnpublishVolume(ctx context.Context, in *csipb.ControllerUnpublishVolumeRequest, opts ...grpc.CallOption) (*csipb.ControllerUnpublishVolumeResponse, error) {
+	return nil, nil
+}
+
+func (f *FakeControllerClient) ValidateVolumeCapabilities(ctx context.Context, in *csipb.ValidateVolumeCapabilitiesRequest, opts ...grpc.CallOption) (*csipb.ValidateVolumeCapabilitiesResponse, error) {
+	return nil, nil
+}
+func (f *FakeControllerClient) ListVolumes(ctx context.Context, in *csipb.ListVolumesRequest, opts ...grpc.CallOption) (*csipb.ListVolumesResponse, error) {
+	return nil, nil
+}
+
+func (f *FakeControllerClient) GetCapacity(ctx context.Context, in *csipb.GetCapacityRequest, opts ...grpc.CallOption) (*csipb.GetCapacityResponse, error) {
+	return nil, nil
+}
+func (f *FakeControllerClient) ControllerProbe(ctx context.Context, in *csipb.ControllerProbeRequest, opts ...grpc.CallOption) (*csipb.ControllerProbeResponse, error) {
+	return nil, nil
+}
