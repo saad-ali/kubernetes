@@ -17,12 +17,15 @@ limitations under the License.
 package csi
 
 import (
+	"errors"
 	"fmt"
 	"path"
 
 	"github.com/golang/glog"
 	grpctx "golang.org/x/net/context"
 	api "k8s.io/api/core/v1"
+	storage "k8s.io/api/storage/v1alpha1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	kstrings "k8s.io/kubernetes/pkg/util/strings"
@@ -40,6 +43,7 @@ type csiMountMgr struct {
 	pod        *api.Pod
 	podUID     types.UID
 	options    volume.VolumeOptions
+	volumeInfo map[string]string
 	volume.MetricsNil
 }
 
@@ -73,10 +77,43 @@ func (c *csiMountMgr) SetUpAt(dir string, fsGroup *int64) error {
 	defer cancel()
 
 	csi := c.csiClient
+	pvName := c.spec.PersistentVolume.GetName()
 
+	// ensure version is supported
 	if err := csi.AssertSupportedVersion(ctx, csiVersion); err != nil {
 		glog.Errorf(log("failed to assert version: %v", err))
 		return err
+	}
+
+	// assert volume attachment capability from driver,
+	// if not supported, assume vol is not previously attached and not ready for mounting
+	if err := csi.AssertVolumePublishCapability(ctx); err != nil {
+		glog.Error(log("failed to assert volume publish capability: %v", err))
+		return err
+	}
+
+	// search for attachment by VolumeAttachment.Spec.Source.PersistentVolumeName
+	if c.volumeInfo == nil {
+		attachList, err := c.k8s.StorageV1alpha1().VolumeAttachments().List(meta.ListOptions{})
+		if err != nil {
+			glog.Error(log("failed to get volume attachments: %v", err))
+			return err
+		}
+
+		var attachment *storage.VolumeAttachment
+		for _, attach := range attachList.Items {
+			if attach.Spec.Source.PersistentVolumeName != nil &&
+				*attach.Spec.Source.PersistentVolumeName == pvName {
+				attachment = &attach
+				break
+			}
+		}
+
+		if attachment == nil {
+			glog.Error(log("unable to find VolumeAttachment with PV.name = %s", pvName))
+			return errors.New("no existing VolumeAttachment found")
+		}
+		c.volumeInfo = attachment.Status.AttachmentMetadata
 	}
 
 	accessMode := api.ReadWriteOnce
@@ -90,6 +127,7 @@ func (c *csiMountMgr) SetUpAt(dir string, fsGroup *int64) error {
 		c.readOnly,
 		dir,
 		accessMode,
+		c.volumeInfo,
 		"ext4", //TODO needs to be sourced from PV or somewhere else
 	)
 

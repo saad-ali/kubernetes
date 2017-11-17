@@ -148,7 +148,7 @@ func (f *FakeControllerClient) ControllerGetCapabilities(ctx context.Context, in
 
 	if f.nextCapabilities == nil {
 		f.nextCapabilities = []*csipb.ControllerServiceCapability{
-			{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_UNKNOWN}}},
+			{&csipb.ControllerServiceCapability_Rpc{&csipb.ControllerServiceCapability_RPC{csipb.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME}}},
 		}
 	}
 	return &csipb.ControllerGetCapabilitiesResponse{

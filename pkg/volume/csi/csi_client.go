@@ -32,12 +32,14 @@ import (
 
 type csiClient interface {
 	AssertSupportedVersion(ctx grpctx.Context, ver *csipb.Version) error
+	AssertVolumePublishCapability(ctx grpctx.Context) error
 	NodePublishVolume(
 		ctx grpctx.Context,
 		volumeid string,
 		readOnly bool,
 		targetPath string,
 		accessMode api.PersistentVolumeAccessMode,
+		volumeInfo map[string]string,
 		fsType string,
 	) error
 	NodeUnpublishVolume(ctx grpctx.Context, volId string, targetPath string) error
@@ -179,6 +181,7 @@ func (c *csiDriverClient) NodePublishVolume(
 	readOnly bool,
 	targetPath string,
 	accessMode api.PersistentVolumeAccessMode,
+	volumeInfo map[string]string,
 	fsType string,
 ) error {
 
@@ -198,7 +201,7 @@ func (c *csiDriverClient) NodePublishVolume(
 		VolumeId:          volId,
 		TargetPath:        targetPath,
 		Readonly:          readOnly,
-		PublishVolumeInfo: map[string]string{"device": "/dev/null"}, //TODO where is this from
+		PublishVolumeInfo: volumeInfo,
 
 		VolumeCapability: &csipb.VolumeCapability{
 			AccessMode: &csipb.VolumeCapability_AccessMode{

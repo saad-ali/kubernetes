@@ -128,7 +128,15 @@ func TestClientNodePublishVolume(t *testing.T) {
 	for _, tc := range testCases {
 		t.Log("case: ", tc.name)
 		client.nodeClient.(*fake.FakeNodeClient).SetNextError(tc.err)
-		err := client.NodePublishVolume(grpctx.Background(), tc.volID, false, tc.targetPath, api.ReadWriteOnce, tc.fsType)
+		err := client.NodePublishVolume(
+			grpctx.Background(),
+			tc.volID,
+			false,
+			tc.targetPath,
+			api.ReadWriteOnce,
+			map[string]string{"device": "/dev/null"},
+			tc.fsType,
+		)
 		if tc.mustFail && err == nil {
 			t.Error("must fail, but err is nil: ", err)
 		}

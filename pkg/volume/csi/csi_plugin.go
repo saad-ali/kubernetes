@@ -100,8 +100,8 @@ func (p *csiPlugin) NewMounter(
 
 	k8s := p.host.GetKubeClient()
 	if k8s == nil {
-		glog.Error(log("unable to get kubernetes client from host"))
-		return nil, errors.New("unable to get Kubernetes client")
+		glog.Error(log("failed to get a kubernetes client"))
+		return nil, errors.New("failed to get a Kubernetes client")
 	}
 
 	mounter := &csiMountMgr{

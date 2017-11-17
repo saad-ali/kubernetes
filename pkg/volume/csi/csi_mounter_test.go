@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	api "k8s.io/api/core/v1"
+	storage "k8s.io/api/storage/v1alpha1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/kubernetes/pkg/volume"
@@ -69,6 +70,7 @@ func TestMounterSetUp(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	pv := makeTestPV("test-pv", 10, testDriver, testVol)
+	pvName := pv.GetName()
 
 	mounter, err := plug.NewMounter(
 		volume.NewSpecFromPersistentVolume(pv, pv.Spec.PersistentVolumeSource.CSI.ReadOnly),
@@ -85,6 +87,28 @@ func TestMounterSetUp(t *testing.T) {
 
 	csiMounter := mounter.(*csiMountMgr)
 	csiMounter.csiClient = setupClient(t)
+
+	attachment := &storage.VolumeAttachment{
+		ObjectMeta: meta.ObjectMeta{
+			Name: "pv-1234556775313",
+		},
+		Spec: storage.VolumeAttachmentSpec{
+			NodeName: "test-node",
+			Attacher: csiPluginName,
+			Source: storage.VolumeAttachmentSource{
+				PersistentVolumeName: &pvName,
+			},
+		},
+		Status: storage.VolumeAttachmentStatus{
+			Attached:    false,
+			AttachError: nil,
+			DetachError: nil,
+		},
+	}
+	_, err = csiMounter.k8s.StorageV1alpha1().VolumeAttachments().Create(attachment)
+	if err != nil {
+		t.Fatalf("failed to setup VolumeAttachment: %v", err)
+	}
 
 	// Mounter.SetUp()
 	if err := csiMounter.SetUp(nil); err != nil {
