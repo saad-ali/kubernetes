@@ -89,6 +89,12 @@ storage.k8s.io/v1 \
 storage.k8s.io/v1alpha1 \
 }"
 
+# Group versions with installed as CRDs. Although these are resources not are
+# available on the API server by default, client-go is still generated.
+KUBE_CRD_GROUP_VERSIONS="
+ drivers.storage.k8s.io/v1alpha1 \
+"
+
 # not all group versions are exposed by the server.  This list contains those
 # which are not available so we don't generate clients or swagger for them
 KUBE_NONSERVER_GROUP_VERSIONS="

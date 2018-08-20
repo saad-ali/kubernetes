@@ -38,7 +38,7 @@ informergen=$(kube::util::find-binary "informer-gen")
 # that generates the set-gen program.
 #
 
-GROUP_VERSIONS=(${KUBE_AVAILABLE_GROUP_VERSIONS})
+GROUP_VERSIONS=(${KUBE_AVAILABLE_GROUP_VERSIONS} ${KUBE_CRD_GROUP_VERSIONS})
 GV_DIRS=()
 INTERNAL_DIRS=()
 for gv in "${GROUP_VERSIONS[@]}"; do
@@ -55,6 +55,11 @@ for gv in "${GROUP_VERSIONS[@]}"; do
     fi
 
   GV_DIRS+=("${pkg_dir}")
+
+  # skip internal API for groups that are server by CRD
+  if [[ " ${KUBE_CRD_GROUP_VERSIONS} " == *" ${gv} "* ]]; then
+    continue
+  fi
 
   # collect internal groups
   int_group="${pkg_dir%/*}/"
