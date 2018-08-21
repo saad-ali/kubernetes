@@ -280,7 +280,7 @@ kube::util::group-version-to-pkg-path() {
       echo "pkg/apis/${group_version%.*k8s.io}"
       ;;
     drivers.storage.k8s.io/*)
-      echo "pkg/apis/storagedrivers/${group_version}"
+      echo "pkg/apis/storagedrivers/v1alpha1"
       ;;
     *.k8s.io/*)
       echo "pkg/apis/${group_version/.*k8s.io/}"
